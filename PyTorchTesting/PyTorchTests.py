@@ -155,3 +155,36 @@ print(y)
 y[0, 0] = 100 # Changing the first element of the first row of the new tensor.
 print(x) # Realize how the first element of the original tensor is also changed since they share the same memory.
 print(y)
+
+# Indexing (selecting speficic elements from a tensor).
+index = torch.arange(1, 10).reshape(1, 3, 3) # Creating a 1x3x3 tensor.
+
+print()
+print(index)
+print(index[0]) # Notice how this returns the first 3x3 matrix in the tensor, hence one less set of brackets.
+print(index[0][0]) # This returns the first row of the first 3x3 matrix in the tensor.
+print(index[0][0][0]) # This returns the first element of the first row of the first 3x3 matrix in the tensor.
+print(index[:, 0]) # This returns the first column of the first 3x3 matrix in the tensor. The colon means "all elements in this dimension". So if it was just the colon, it would return all elements in the first dimension (the first 3x3 matrix in this case).
+
+# PyTorch and Numpy interoperability. 
+# Converting NumPy data to a PyTorch tensor.
+numpy_array = np.array([[1, 2, 3], [4, 5, 6]])
+pytorch_tensor = torch.from_numpy(numpy_array) 
+print(pytorch_tensor)
+print(pytorch_tensor.dtype) # Note that the dtype of the tensor is the same as the dtype of the NumPy array, which is int 64 by default, this is not the case for PyTorch tensors which default to float 32. Bear that in mind.
+
+# Converting a PyTorch tensor to a NumPy array.
+ones_tensor = torch.ones(7)
+numpy_ones = ones_tensor.numpy() # This will create a NumPy array from the PyTorch tensor.
+print(numpy_ones)
+
+np_changed = numpy_array + 1 # Changing the NumPy array.
+print(np_changed)
+print(pytorch_tensor) # Notice how the values in the tensor did not change since you have created a new NumPy array. If you were to do numpy_array += 1 then the changes would be reflected.
+numpy_array += 1
+print(numpy_array)
+print(pytorch_tensor) # Notice how the values in the tensor did change since you have changed the original NumPy array (so when you create a PyTorch tensor from a NumPy array, they share memory). So, if you want to modify a NumPy array and its corresponding tensors, make sure you modify the original NumPy array, not a copy of it by doing (array name) += (value) or (array name)[index] = (value).
+
+ones_tensor = ones_tensor + 1
+print(ones_tensor) 
+print(numpy_ones) # Same reasoning here, if you want numpy_ones to change, the original ones_tensor must be modified, do so by writing "ones_tensor +=".
