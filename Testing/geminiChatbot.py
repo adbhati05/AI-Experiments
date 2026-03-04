@@ -2,20 +2,20 @@
 import dotenv
 import os
 
-# From here, set up your google AI account to be able to import googlegenerativeai
-import google.generativeai as genai
+from google import genai
 
-# Setting up the generative Gemini model. This model is going to be a chat bot. 
+# Loading the .env file and setting up the client with the API key.
 dotenv.load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
-chatBot = model.start_chat()
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Creating a while-loop that terminates when the user inputs "exit" or "Exit" when speaking to the chatbot. 
+# Creating a simple prompt for Gemini to respond to via user input.
 while True:
-    userInput = input("You: ")
-    if userInput.lower() == "exit":
-        print("Chatbot: Have a goontastic day!")
+    userInput = input("Ask Gemini a question (or 'quit' to exit): ")
+    if userInput.lower() == "quit":
         break
-    response = chatBot.send_message(userInput)
-    print("Chatbot: ", response.text)
+    response = client.models.generate_content(
+        model="gemini-3.1-flash-lite-preview",
+        contents=userInput
+    )
+
+    print(response.text)
