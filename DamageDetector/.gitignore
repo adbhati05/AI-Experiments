@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Datasets, images are large and live outside git.
+# Label files (.txt) ARE tracked; see data/labels.
+data/images/
+data/external/
+*.zip
+*.tar
+*.tar.gz
+
+# Model weights & training artifacts
+*.pt
+*.pth
+*.onnx
+runs/
+wandb/
+
+# Local scratch
+scratch/

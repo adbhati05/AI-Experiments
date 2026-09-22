@@ -1,0 +1,14 @@
+# CarDD (Car Damage Detection), converted from COCO JSON to YOLO format.
+# Official train/val/test split. Class IDs are 0-indexed (CarDD JSON ids minus 1).
+path: /Users/adbhati/Documents/AI_ML Projects/AI-Experiments/DamageDetector/data
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: dent
+  1: scratch
+  2: crack
+  3: glass shatter
+  4: lamp broken
+  5: tire flat
