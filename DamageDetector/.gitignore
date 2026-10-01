@@ -28,3 +28,6 @@ wandb/
 
 # Local scratch
 scratch/
+
+# Choosing to ignore the planning folder which contains ideas and notes for project progression.
+planning/
