@@ -4,13 +4,13 @@ from ultralytics import YOLO
 # Initializing the path to the dataset config, resolved from this file's location rather than the current working directory, so the script can run properly from anywhere.
 DATA_CONFIG = Path(__file__).resolve().parent.parent / "data" / "data.yaml"
 
-BATCH_SIZE = 16 # Cappied at 16 since this computer has 16GB of RAM and any higher batch size would result in out-of-memory errors.
+BATCH_SIZE = 8 # Capped at 8 since the resolution is set to 960 (higher than the usual 640) and the GPU memory on this computer is limited.
 EPOCHS = 100
 PATIENCE = 25 # Setting patience to 25 since the model is expected to converge quickly. This will prevent overfitting and save time by stopping training early in case no improvement is seen in the validation loss for 25 epochs.
-RESOLUTION = 640
+RESOLUTION = 960
 WORKERS = 4 # Including 4 workers for data loading since this will speed up training by loading data in parallel.
 DEVICE = "mps" # Ensuring that the model is trained on this computer's GPU (Apple Silicon) since CPU training is significantly slower.
-RUN_NAME = "baseline" # Ensuring that the run name is set to "baseline" since this is the first run of the model and will be used as a reference for future runs.
+RUN_NAME = "res960" # Ensuring that the run name is set to "res960" since this is the second run of the model in which resolution was increased in hopes of improving model performance.
 SEED = 0 # Setting the seed to 0 to ensure reproducibility of results across different runs of the model.
 
 # Choosing to use the YOLOv8 nano model as a starting point for training since its lightweight and training will be faster.

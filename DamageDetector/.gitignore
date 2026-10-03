@@ -18,6 +18,7 @@ data/external/
 *.zip
 *.tar
 *.tar.gz
+*.cache
 
 # Model weights & training artifacts
 *.pt
