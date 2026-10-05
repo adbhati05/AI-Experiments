@@ -15,6 +15,7 @@ env/
 # Label files (.txt) ARE tracked; see data/labels.
 data/images/
 data/external/
+data/clean/
 *.zip
 *.tar
 *.tar.gz
