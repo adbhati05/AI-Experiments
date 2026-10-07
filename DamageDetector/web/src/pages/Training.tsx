@@ -15,7 +15,7 @@ const negatives = splits.train.negatives
 // Where the data came from and what it was trained on, shown as a compact strip at the top of the page.
 const SETUP = [
   { label: 'CarDD', value: `${(splits.train.images - negatives).toLocaleString()} / ${splits.val.images} / ${splits.test.images}`, note: 'train, val and test photos' },
-  { label: 'CompCars', value: `${negatives} + ${clean_eval_images}`, note: 'undamaged cars for training and for testing' },
+  { label: 'CompCars', value: `${negatives} + ${clean_eval_images}`, note: 'undamaged cars for training and testing' },
   { label: 'Hardware', value: 'M2 Pro, 16 GB', note: 'one laptop, no cloud GPU' },
 ]
 
@@ -38,36 +38,48 @@ export default function Training() {
           ))}
         </dl>
 
-        <Section title="The five sessions" note="Two predictions failed and one held. Select a row for the details.">
+        <Section title="The five sessions" note="The chart tracks mAP50-95, a score from 0 to 1 for how closely the predicted boxes match the labeled ones, over the course of each run. Select a run for more details on how well each one met expectations.">
           <SessionTable active={active} onActive={setActive} />
           <EpochChart active={active} onActive={setActive} />
         </Section>
 
-        <Section title="What moved, class by class" note="AP50 on the validation split across the five sessions. Scratch never improved.">
+        <Section title="What moved, class by class" note="AP50 (average precision, a per-class accuracy score from 0 to 1) on the validation split for each of the five sessions. None of the changes moved the three hard classes by much: dent gained a little, while scratch and crack ended slightly lower than where they started.">
           <ClassTrends />
         </Section>
 
-        <Section title="Why three classes stay hard" note="Larger damage that fills its box scores higher. How often a class appears in training does not predict it.">
+        <Section title="Why three classes stay hard" note="Larger damage that fills more of its bounding box scores higher, which partly explains why the model struggled with dents, scratches and cracks in particular. Scratches and dents also had by far the most training examples and still scored near the bottom, so the usual expectation that more data yields better performance does not hold here.">
           <GeometryTable />
         </Section>
 
-        <Section title="What the benchmark missed" note={`CarDD has no undamaged cars, so it could not show false alarms. These are ${clean_eval_images} clean cars the model never trained on.`}>
+        <Section title="What the benchmark missed" note={`CarDD contains no undamaged cars, so its metrics could never show how often the model raises a false alarm on a car with nothing wrong with it. Below are the false positives on ${clean_eval_images} clean cars from CompCars that the model never trained on, before and after negative examples were added to the training data.`}>
           <CleanCars />
         </Section>
 
         <div className="border-t border-line">
           <Accordion title="The bug that cost me a day">
             <p>
-              When I first started training, the first run looked broken: losses rose, accuracy stayed near zero, and the session went through just 7 epochs in a few hours. So, I intially hypothesized that the source of the error was PyTorch not recognizing the GPU on my laptop (a MacBook). 
-              I tweaked the code to ensure the model was loaded on the GPU, but the results were the same. After some more diagnosing, it turns out the version of PyTorch I was using, which was 2.4.1, was outdated. I updated it to 2.14.1 and losses dropped, accuracy rose, and the epochs were being completed in minutes.
-              The main takeaway from this experience was that I forgot to ensure dependencies were up-to-date, rookie mistake lol.
+              When I first started training, the run looked broken: the losses kept rising, accuracy stayed near zero, and the session got through
+              just 7 epochs in a few hours. My first guess was that PyTorch wasn't recognizing the GPU on my MacBook, so I tweaked the code to make
+              sure the model was loaded onto it, but nothing changed. To verify nothing else was wrong with the set up, I ran it on the CPU where it learned just fine. 
+              After some more digging, it turned out the version of PyTorch I was using (2.4.1) was outdated. I updated to 2.14.1 and the losses dropped,
+              accuracy climbed, and epochs finished in minutes instead of hours. The main takeaway is that I forgot to make sure my dependencies were
+              up to date, rookie mistake lol.
             </p>
           </Accordion>
           <Accordion title="Future developments I have in mind">
-            <ul className="flex list-disc flex-col gap-1.5 pl-5">
-              <li>Whole-car photos still draw more false alarms than close-ups. Whole-car negatives should close that gap.</li>
-              <li>One threshold per class, in place of a single 0.50.</li>
-              <li>Segmentation masks. A crack fills only 26% of its box, so a box is a poor fit for it.</li>
+            <ul className="flex list-disc flex-col gap-2 pl-5">
+              <li>
+                Whole-car photos still set off more false alarms than close-ups do (since every undamaged car I added to training was a close-up) so
+                the next training run will add whole-car negatives to close that gap.
+              </li>
+              <li>
+                Right now every class shares a single confidence threshold of 0.50, and I'd like to give each class its own. A flat tire and a
+                hairline crack clearly don't deserve the same cutoff. 
+              </li>
+              <li>
+                I also want to try segmentation masks in place of boxes, since a crack only fills about 26% of its bounding box. A
+                rectangle is a pretty poor fit for that kind of damage.
+              </li>
             </ul>
           </Accordion>
         </div>

@@ -10,11 +10,11 @@ export const SESSION_NOTES: Record<number, { hypothesis: string; result: string 
   },
   3: {
     hypothesis: 'A larger model lifts dent, scratch and crack.',
-    result: 'Dent improved. Scratch did not move. Best mAP50-95 so far.',
+    result: 'Dent improved while scratch did not move. Best mAP50-95 so far.',
   },
   4: {
-    hypothesis: 'Resolution and capacity stack for a further gain of 0.01 to 0.02.',
-    result: 'mAP50-95 fell 0.010 against Session 3. It finds more and localizes worse.',
+    hypothesis: 'A combination of the last two (higher resolution and a larger model) should further lift dent, scratch and crack.',
+    result: 'mAP50-95 fell 0.010 against Session 3. It finds more and localizes worse. No meaningful change in dent, scratch or crack.',
   },
   5: {
     hypothesis: 'Adding undamaged cars to training cuts false alarms without costing recall.',

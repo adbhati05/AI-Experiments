@@ -27,8 +27,8 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 md:h-16">
-        <NavLink to="/" onClick={() => setOpen(false)} className="flex items-center gap-2.5">
-          <Logo className="h-7 w-7 md:h-8 md:w-8" />
+        <NavLink to="/" onClick={() => setOpen(false)} className="flex items-center gap-1">
+          <Logo className="h-9 w-9 md:h-10 md:w-10" />
           <span className="font-display text-lg font-semibold tracking-wide md:text-xl">
             Damage<span className="text-brass">Detector</span>
           </span>

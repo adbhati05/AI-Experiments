@@ -28,7 +28,7 @@ export function Accordion({ title, children }: { title: string; children: ReactN
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="max-w-[65ch] pb-5 text-sm text-muted">{children}</div>
+            <div className="px-4 pb-5 text-sm text-muted md:px-6">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
