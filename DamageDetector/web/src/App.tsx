@@ -34,10 +34,20 @@ function App() {
           </Suspense>
         </motion.main>
         <footer className="border-t border-line">
-          {/* The data credit sits on the left and the copyright on the right. On small screens the two lines stack. */}
+          {/* The data credit sits on the left and the copyright and source link on the right. On small screens the two lines stack. */}
           <div className="mx-auto flex max-w-5xl flex-col gap-2 px-5 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>Trained on CarDD, with undamaged cars from CompCars. Model: YOLOv8 by Ultralytics.</p>
-            <p className="sm:text-right">© {new Date().getFullYear()} Aditya Bhati. All rights reserved.</p>
+            <p className="sm:text-right">
+              © {new Date().getFullYear()} Aditya Bhati.{' '}
+              <a
+                href="https://github.com/adbhati05/AI-Experiments/tree/main/DamageDetector"
+                target="_blank"
+                rel="noreferrer"
+                className="text-text underline-offset-4 transition-colors duration-150 hover:text-brass hover:underline"
+              >
+                Source on GitHub
+              </a>
+            </p>
           </div>
         </footer>
       </div>
