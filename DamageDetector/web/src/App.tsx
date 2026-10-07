@@ -1,89 +1,47 @@
-import {  useEffect , useState } from 'react'
-import './App.css'
+import { Suspense, lazy } from 'react'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import { MotionConfig, motion } from 'motion/react'
+import { TopBar } from './components/TopBar'
+import Detect from './pages/Detect'
 
-const API_URL = import.meta.env.VITE_API_URL
-
-interface Box {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
-interface Detection {
-  class_name: string;
-  confidence: number;
-  box: Box;
-}
-
-interface PredictResponse {
-  width: number;
-  height: number;
-  detections: Detection[];
-}
+// Loading the two chart-heavy pages only when they are visited, so the Detect page does not have to download the charting library.
+const Training = lazy(() => import('./pages/Training'))
+const Performance = lazy(() => import('./pages/Performance'))
 
 function App() {
-  const [result, setResult] = useState<PredictResponse | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
-  const [previewURL, setPreviewURL] = useState<string | null>(null) 
-
-  async function handleFile(file: File) {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setPreviewURL(URL.createObjectURL(file));
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch(`${API_URL}/predict`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.detail || 'Error predicting damage');
-      setResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reach the server');
-    } finally {
-      setLoading(false);
-    }
-  }
-  
-  useEffect(() => {
-  fetch(`${API_URL}/health`)
-    .then((res) => res.json())
-    .then((data) => console.log(data))
-    .catch((err) => console.error('Error fetching health check:', err))
-  }, []);
+  const location = useLocation()
 
   return (
-    <div className="App">
-      <h1>Welcome to the Damage Detector</h1>
-      <input
-        type="file"
-        accept="image/jpeg, image/png, image/webp"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-      />
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {previewURL && <img src={previewURL} alt="Preview" style={{ maxWidth: '300px', marginTop: '20px' }} />}
-      {result && (
-        <div>
-          <h2>Detections:</h2>
-          <ul>
-            {result.detections.map((detection, index) => (
-              <li key={index}>
-                Class: {detection.class_name}, Confidence: {(detection.confidence * 100).toFixed(2)}%, Box: ({detection.box.x1}, {detection.box.y1}) to ({detection.box.x2}, {detection.box.y2})
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+    // Setting reducedMotion to "user" so every animation respects the visitor's reduced motion setting.
+    <MotionConfig reducedMotion="user">
+      <div className="flex min-h-dvh flex-col">
+        <TopBar />
+        {/* Keying the page on its path so each page fades in when it is navigated to. */}
+        <motion.main
+          key={location.pathname}
+          className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 md:py-14"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Suspense fallback={null}>
+            <Routes location={location}>
+              <Route path="/" element={<Detect />} />
+              <Route path="/training" element={<Training />} />
+              <Route path="/performance" element={<Performance />} />
+              <Route path="*" element={<Detect />} />
+            </Routes>
+          </Suspense>
+        </motion.main>
+        <footer className="border-t border-line">
+          {/* The data credit sits on the left and the copyright on the right. On small screens the two lines stack. */}
+          <div className="mx-auto flex max-w-5xl flex-col gap-2 px-5 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>Trained on CarDD, with undamaged cars from CompCars. Model: YOLOv8 by Ultralytics.</p>
+            <p className="sm:text-right">© {new Date().getFullYear()} Aditya Bhati. All rights reserved.</p>
+          </div>
+        </footer>
+      </div>
+    </MotionConfig>
   )
 }
 
