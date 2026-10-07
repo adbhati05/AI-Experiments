@@ -21,8 +21,9 @@ data/clean/
 *.tar.gz
 *.cache
 
-# Model weights & training artifacts
-*.pt
+# Model weights & training artifacts (making an exception for the best.pt file in the api/weights folder, which is tracked).
+*.pt 
+!api/weights/best.pt
 *.pth
 *.onnx
 runs/
