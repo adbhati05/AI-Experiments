@@ -42,7 +42,7 @@ const missedPct = (name: string) => {
 export default function Performance() {
   return (
     <>
-      <PageHeader title="Performance" subtitle={`The model behind the Detect page, measured once on ${dataset.splits.test.images} photos it never saw in training.`} />
+      <PageHeader title="Performance" subtitle={`The model behind the Detect page (from the fifth training session), measured once on ${dataset.splits.test.images} photos it never saw in training.`} />
 
       <div className="flex flex-col gap-14">
         <div className="flex flex-col gap-4">
@@ -63,48 +63,59 @@ export default function Performance() {
           </dl>
         </div>
 
-        <Section title="By damage class" note="Glass, tires and lamps have sharp edges and score high. Dents, scratches and cracks fade out at their edges and score lower.">
+        <Section title="By damage class" note="Shattered glass, flat tires and broken lamps have sharp, well-defined edges, which makes them easy to localize and therefore score higher. Dents, scratches and cracks fade out at their edges, so both the model and the people who labeled the data have a harder time agreeing on where the damage ends, causing them to score lower. AP50 counts a detection as correct when its box overlaps the labeled box by at least half.">
           <ClassTable />
         </Section>
 
-        <Section title="Choosing the threshold" note="A higher threshold shows fewer false alarms and misses more damage. The slider on the Detect page moves along this chart.">
+        <Section title="Choosing the threshold" note="Every detection comes with a confidence score, and the threshold decides how confident the model has to be before a detection is shown. Raising it trades recall for precision, meaning fewer false alarms but more missed damage. A threshold of 0.50 was chosen because it sits near where the two curves cross. The slider on the Detect page moves along this same chart.">
           <ThresholdChart />
         </Section>
 
-        <Section title="Where it goes wrong" note="Each column is one kind of real damage. Most errors are damage the model missed entirely, in the bottom row, and almost none are one class mistaken for another.">
+        <Section title="Where it goes wrong" note="A confusion matrix compares what the model predicted (rows) against what was actually in the photo (columns), with each column adding up to 100% of one kind of real damage. Most of the errors sit in the bottom row, which is damage the model missed entirely, while almost none come from mistaking one class for another.">
           <ConfusionMatrix />
         </Section>
 
-        <Section title="Precision and recall by class">
+        <Section title="Precision and recall by class" note="Each curve shows how precision falls as the model is pushed to find more of a class, so a curve that stays high and far to the right belongs to a class the model handles well. The number beside each class in the legend is its AP50, which is the area under its curve.">
           <PrCurves />
         </Section>
 
         <div className="border-t border-line">
           <Accordion title="Shortcomings">
-            <ul className="flex list-disc flex-col gap-1.5 pl-5">
+            <ul className="flex list-disc flex-col gap-2 pl-5">
               <li>
-                The model is small. YOLOv8s has {model.parameters_millions} million parameters and was chosen because it trains on my MacBook, not because
-                it is the most accurate option.
+                The model is on the small side: YOLOv8s has {model.parameters_millions} million parameters. Despite being aware of this, I picked it because my MacBook could safely train it in a reasonable amount of time.
               </li>
               <li>
-                Soft-edged damage is often missed. At the shipping threshold it misses about {missedPct('dent')}% of dents, {missedPct('scratch')}% of
-                scratches and {missedPct('crack')}% of cracks.
+                It often misses damage with soft edges, and at the shipping threshold that works out to about {missedPct('dent')}% of dents,{' '}
+                {missedPct('scratch')}% of scratches and {missedPct('crack')}% of cracks going undetected.
               </li>
               <li>
-                The labels limit it. Where a scratch or dent ends is a judgment call, so the training boxes are inconsistent, and some of the errors
-                counted here are the model outlining the same damage differently or finding damage that was never labeled.
+                The labels hold it back too, since where a scratch or dent ends is a judgment call. This makes the training boxes inconsistent and
+                means some of the errors counted here are really the model outlining the same damage differently or finding damage nobody labeled.
               </li>
-              <li>Each configuration was trained once (I was focused on getting this project deployed). Small differences between sessions could be chance, not a real effect.</li>
-              <li>It has only seen one dataset. Night photos, rain, unusual angles and other cameras are untested.</li>
+              <li>
+                I trained each configuration only once because I was focused on getting this project deployed, so the small differences between
+                sessions could come down to chance instead of a real effect.
+              </li>
+              <li>It has only ever seen one dataset, so I can't say how it holds up on night photos, rain, unusual angles or other cameras.</li>
             </ul>
           </Accordion>
           <Accordion title="Improvements">
-            <ul className="flex list-disc flex-col gap-1.5 pl-5">
-              <li>Better hardware. A dedicated GPU would allow a larger model, higher resolution at a full batch size and shorter runs.</li>
-              <li>Repeated runs. Training each configuration several times would show which differences are real.</li>
-              <li>Cleaner labels. Relabeling dents, scratches and cracks under one written rule would raise the ceiling for both training and scoring.</li>
-              <li>More varied photos, especially of cracks and other small damage, and from more than one source.</li>
-              <li>Longer training. The larger model reached its best score on its final epoch, so it had not finished improving at the 100 epoch limit.</li>
+            <ul className="flex list-disc flex-col gap-2 pl-5">
+              <li>
+                Better hardware would help the most, since a dedicated GPU would let me train a larger model at a higher resolution with a full
+                batch size, and get through each run much faster.
+              </li>
+              <li>Training each configuration several times would show which of the differences between sessions are real and which are just noise.</li>
+              <li>
+                Relabeling the dents, scratches, and cracks under one written rule would give cleaner labels, which raises the ceiling for both
+                training the model and scoring it.
+              </li>
+              <li>More varied photos from different sources would help as well, especially of cracks and other small damage.</li>
+              <li>
+                Longer training is worth a try, because the larger model hit its best score on its very last epoch, indicating that it hadn't finished
+                improving when it reached the 100 epoch limit.
+              </li>
             </ul>
           </Accordion>
         </div>

@@ -5,7 +5,7 @@ export function Section({ title, note, children }: { title: string; note?: strin
     <section className="flex flex-col gap-4">
       <div>
         <h2 className="font-display text-xl font-medium tracking-wide">{title}</h2>
-        {note && <p className="mt-1 max-w-[65ch] text-sm text-muted">{note}</p>}
+        {note && <p className="mt-1 text-sm text-muted">{note}</p>}
       </div>
       {children}
     </section>
