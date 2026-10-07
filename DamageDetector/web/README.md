@@ -1,78 +1,52 @@
-# React + TypeScript + Vite
+# DamageDetector web app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend for DamageDetector. It has three pages:
 
-Currently, two official plugins are available:
+- **Detect** uploads a photo to the API and draws the detections on it, with a confidence slider.
+- **Training** shows the five training sessions and what each one found.
+- **Performance** shows how the shipped model scores on the test split.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Built with React, TypeScript, Vite, Tailwind CSS, Recharts and Motion.
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Running it
 
 ```
+npm install
+echo "VITE_API_URL=http://127.0.0.1:8000" > .env.local
+npm run dev
+```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+The site runs at `http://localhost:5173`. The Detect page needs the API running; see the README one folder up. The other two pages work without it.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Command | What it does |
+|---|---|
+| `npm run dev` | Starts the dev server |
+| `npm run build` | Type-checks and builds to `dist/` |
+| `npm run lint` | Runs ESLint |
+| `npm run preview` | Serves the built site locally |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Layout
 
 ```
+src/
+  pages/        Detect, Training, Performance
+  components/   the top bar, charts, tables and the upload pieces
+  lib/          the API client, shared types and the class colors
+  hooks/        the check that the API is awake
+  data/         metrics.json and the notes for each training session
+public/         the logo
+```
+
+## Where things are set
+
+- **Colors.** The interface colors are defined once in `src/index.css`, and the six damage class colors in `src/lib/classes.ts`.
+- **Numbers on the Training and Performance pages.** They come from `src/data/metrics.json`, which is written by `src/export_metrics.py` in the project root. Rerun that script after retraining instead of editing the file by hand.
+- **The API address.** `VITE_API_URL`, in `.env.local` for development and in the host's settings for production.
+
+## Deploying
+
+The site is static and deploys to Vercel with the root directory set to this folder.
+
+- `vercel.json` sends every path to `index.html`, so refreshing `/training` or `/performance` works.
+- Set `VITE_API_URL` to the deployed API's address.
+- Add the site's address to `ALLOWED_ORIGINS` on the API, or the browser will block its requests.

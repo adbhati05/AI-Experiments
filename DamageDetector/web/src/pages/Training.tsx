@@ -19,6 +19,26 @@ const SETUP = [
   { label: 'Hardware', value: 'M2 Pro, 16 GB', note: 'one laptop, no cloud GPU' },
 ]
 
+// The papers behind the two datasets, cited as their licences require.
+const SOURCES = [
+  {
+    name: 'CarDD',
+    authors: 'Wang, X., Li, W. and Wu, Z.',
+    title: 'CarDD: A New Dataset for Vision-Based Car Damage Detection',
+    venue: 'IEEE Transactions on Intelligent Transportation Systems, 24(7), 7202-7214, 2023',
+    href: 'https://doi.org/10.1109/TITS.2023.3258480',
+    link: 'doi.org/10.1109/TITS.2023.3258480',
+  },
+  {
+    name: 'CompCars',
+    authors: 'Yang, L., Luo, P., Loy, C. C. and Tang, X.',
+    title: 'A Large-Scale Car Dataset for Fine-Grained Categorization and Verification',
+    venue: 'IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2015',
+    href: 'http://mmlab.ie.cuhk.edu.hk/datasets/comp_cars/index.html',
+    link: 'mmlab.ie.cuhk.edu.hk/datasets/comp_cars',
+  },
+]
+
 export default function Training() {
   // Shared between the session table and the chart, so hovering either one highlights the same session in both.
   const [active, setActive] = useState<number | null>(null)
@@ -83,6 +103,26 @@ export default function Training() {
             </ul>
           </Accordion>
         </div>
+
+        {/* Both datasets ask that any public use of them cites their paper. */}
+        <section>
+          <p className="eyebrow">Data sources</p>
+          <ul className="mt-3 flex flex-col gap-3 text-sm text-muted">
+            {SOURCES.map((source) => (
+              <li key={source.name}>
+                <span className="text-text">{source.name}.</span> {source.authors} "{source.title}." <span className="italic">{source.venue}</span>.{' '}
+                <a
+                  href={source.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-text underline-offset-4 transition-colors duration-150 hover:text-brass hover:underline"
+                >
+                  {source.link}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </>
   )

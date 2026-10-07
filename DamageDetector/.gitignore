@@ -12,8 +12,9 @@ env/
 .ipynb_checkpoints/
 
 # Datasets, images are large and live outside git.
-# Label files (.txt) ARE tracked; see data/labels.
+# The label files are converted from CarDD's annotations, and CarDD's licence does not allow redistributing them, so they stay out of git too.
 data/images/
+data/labels/
 data/external/
 data/clean/
 *.zip
