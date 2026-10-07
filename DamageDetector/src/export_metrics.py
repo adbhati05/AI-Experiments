@@ -13,7 +13,7 @@ from ultralytics import YOLO
 ROOT = Path(__file__).resolve().parent.parent
 DATA_CONFIG = ROOT / "data" / "data.yaml"
 RUNS = ROOT / "runs" / "detect"
-OUTPUT = ROOT / "metrics" / "metrics.json"
+OUTPUT = ROOT / "web" / "src" / "data" / "metrics.json" # The React app imports this file directly, so the Training and Performance pages never depend on the API being awake.
 SCRATCH = "/tmp/damagedetector_eval" # Sending ultralytics' own val output here so it doesn't create extra folders inside runs/.
 
 CLASSES = ["dent", "scratch", "crack", "glass shatter", "lamp broken", "tire flat"]
@@ -153,7 +153,28 @@ def threshold_curve():
     return {
         "best_f1": at(conf_axis[f1.argmax()]),
         "points": [at(c) for c in [0.10, 0.25, 0.40, 0.50, 0.60, 0.70]],
+        "curve": [at(c / 100) for c in range(2, 99, 2)], # Sampling the full curves every 0.02 so the web app can draw precision and recall against confidence.
     }
+
+
+# This function returns the confusion matrix of the shipping model on the test split at the shipping confidence threshold.
+# Rows are what the model predicted and columns are what was actually there, with "background" as the last row and column (a missed box or a false alarm).
+def confusion_matrix():
+    model = YOLO(RUNS / SHIPPING_RUN / "weights" / "best.pt")
+    # Ultralytics only fills in the confusion matrix when plots is True, so the plots it writes are sent to the scratch folder and ignored.
+    r = model.val(data=str(DATA_CONFIG), split="test", imgsz=SHIPPING_IMGSZ, device=DEVICE, augment=True, conf=SHIPPING_CONF,
+                  verbose=False, plots=True, project=SCRATCH, name="confusion_matrix", exist_ok=True)
+    return {"conf": SHIPPING_CONF, "labels": CLASSES + ["background"], "counts": r.confusion_matrix.matrix.astype(int).tolist()}
+
+
+# This function returns the precision-recall curve of each class for the shipping model on the test split.
+def pr_curves():
+    model = YOLO(RUNS / SHIPPING_RUN / "weights" / "best.pt")
+    r = model.val(data=str(DATA_CONFIG), split="test", imgsz=SHIPPING_IMGSZ, device=DEVICE, augment=True,
+                  verbose=False, plots=False, project=SCRATCH, name="pr_curves", exist_ok=True)
+    steps = range(0, 1000, 20) # The curves have 1000 points each, so every 20th point is kept to keep the file small.
+    curves = {r.names[int(c)]: [round(float(r.box.prec_values[i][k]), 4) for k in steps] for i, c in enumerate(r.ap_class_index)}
+    return {"recall": [round(float(r.box.px[k]), 3) for k in steps], "precision": curves}
 
 
 # By leveraging the functions above, main() constructs a dictionary of metrics that summarizes the dataset, the model, the training sessions, and the evaluation results.
@@ -168,6 +189,7 @@ def main():
         "model": {
             "architecture": Path(args["model"]).stem, "run": SHIPPING_RUN, "imgsz": SHIPPING_IMGSZ,
             "conf": SHIPPING_CONF, "tta": True, "pretrained_on": "COCO",
+            "parameters_millions": round(sum(p.numel() for p in YOLO(RUNS / SHIPPING_RUN / "weights" / "best.pt").model.parameters()) / 1e6, 1),
         },
         "dataset": {"splits": splits, "class_instances": instances, "clean_eval_images": len(list((ROOT / "data" / "clean" / "eval").glob("*.jpg")))},
         "class_geometry": class_geometry(),
@@ -179,9 +201,11 @@ def main():
         # Retrieving the precision, recall, and F1 score at differing confidence thresholds (0.10, 0.25, 0.40, 0.50, 0.60, 0.70), along with the threshold that gives the best F1 score.
         # The goal here is to validate that the chosen confidence threshold of 0.50 is indeed the best balance between precision and recall.
         "thresholds": threshold_curve(),
+        "confusion_matrix": confusion_matrix(),
+        "pr_curves": pr_curves(),
     }
 
-    OUTPUT.parent.mkdir(exist_ok=True)
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(metrics, indent=2))
     print(f"Wrote {OUTPUT}")
 
