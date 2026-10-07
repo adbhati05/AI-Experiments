@@ -56,13 +56,14 @@ export default function Training() {
         </Section>
 
         <div className="border-t border-line">
-          <Accordion title="The bug that cost a day">
+          <Accordion title="The bug that cost me a day">
             <p>
-              The first runs looked broken: losses rose and accuracy stayed near zero. The same run on the CPU learned normally, which pointed at
-              PyTorch's Apple GPU backend and away from the data. Upgrading PyTorch fixed it and made inference 29 times faster.
+              When I first started training, the first run looked broken: losses rose, accuracy stayed near zero, and the session went through just 7 epochs in a few hours. So, I intially hypothesized that the source of the error was PyTorch not recognizing the GPU on my laptop (a MacBook). 
+              I tweaked the code to ensure the model was loaded on the GPU, but the results were the same. After some more diagnosing, it turns out the version of PyTorch I was using, which was 2.4.1, was outdated. I updated it to 2.14.1 and losses dropped, accuracy rose, and the epochs were being completed in minutes.
+              The main takeaway from this experience was that I forgot to ensure dependencies were up-to-date, rookie mistake lol.
             </p>
           </Accordion>
-          <Accordion title="Not done yet">
+          <Accordion title="Future developments I have in mind">
             <ul className="flex list-disc flex-col gap-1.5 pl-5">
               <li>Whole-car photos still draw more false alarms than close-ups. Whole-car negatives should close that gap.</li>
               <li>One threshold per class, in place of a single 0.50.</li>
