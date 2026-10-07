@@ -5,6 +5,7 @@ import { ClassTable } from '../components/ClassTable'
 import { ThresholdChart } from '../components/ThresholdChart'
 import { ConfusionMatrix } from '../components/ConfusionMatrix'
 import { PrCurves } from '../components/PrCurves'
+import { Accordion } from '../components/Accordion'
 import { metrics } from '../lib/metrics'
 
 const test = metrics.test.tta
@@ -28,6 +29,15 @@ const SPEC = [
   { label: 'Test-time augmentation', value: model.tta ? 'on' : 'off' },
   { label: 'Pretrained on', value: model.pretrained_on },
 ]
+
+// The share of each soft-edged class that the model misses entirely at the shipping threshold, read from the bottom row of the confusion matrix.
+const { labels, counts } = metrics.confusion_matrix
+const background = labels.indexOf('background')
+const missedPct = (name: string) => {
+  const column = labels.indexOf(name)
+  const total = counts.reduce((sum, row) => sum + row[column], 0)
+  return Math.round((counts[background][column] / total) * 100)
+}
 
 export default function Performance() {
   return (
@@ -68,6 +78,36 @@ export default function Performance() {
         <Section title="Precision and recall by class">
           <PrCurves />
         </Section>
+
+        <div className="border-t border-line">
+          <Accordion title="Shortcomings">
+            <ul className="flex list-disc flex-col gap-1.5 pl-5">
+              <li>
+                The model is small. YOLOv8s has {model.parameters_millions} million parameters and was chosen because it trains on my MacBook, not because
+                it is the most accurate option.
+              </li>
+              <li>
+                Soft-edged damage is often missed. At the shipping threshold it misses about {missedPct('dent')}% of dents, {missedPct('scratch')}% of
+                scratches and {missedPct('crack')}% of cracks.
+              </li>
+              <li>
+                The labels limit it. Where a scratch or dent ends is a judgment call, so the training boxes are inconsistent, and some of the errors
+                counted here are the model outlining the same damage differently or finding damage that was never labeled.
+              </li>
+              <li>Each configuration was trained once (I was focused on getting this project deployed). Small differences between sessions could be chance, not a real effect.</li>
+              <li>It has only seen one dataset. Night photos, rain, unusual angles and other cameras are untested.</li>
+            </ul>
+          </Accordion>
+          <Accordion title="Improvements">
+            <ul className="flex list-disc flex-col gap-1.5 pl-5">
+              <li>Better hardware. A dedicated GPU would allow a larger model, higher resolution at a full batch size and shorter runs.</li>
+              <li>Repeated runs. Training each configuration several times would show which differences are real.</li>
+              <li>Cleaner labels. Relabeling dents, scratches and cracks under one written rule would raise the ceiling for both training and scoring.</li>
+              <li>More varied photos, especially of cracks and other small damage, and from more than one source.</li>
+              <li>Longer training. The larger model reached its best score on its final epoch, so it had not finished improving at the 100 epoch limit.</li>
+            </ul>
+          </Accordion>
+        </div>
       </div>
     </>
   )
