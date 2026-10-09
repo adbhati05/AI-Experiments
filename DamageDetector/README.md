@@ -38,15 +38,35 @@ Measured once on CarDD's 374 held-out test photos, after all tuning was finished
 
 ## Training sessions
 
-Each session changed one thing and started with a written prediction of what would happen.
+There were five sessions. Each one changed a single thing about the setup, and before each run I wrote down what I expected that change to do, so the result could prove the guess wrong.
 
-| # | Change | Val mAP50-95 | Hours | Prediction |
-|---|---|---|---|---|
-| 1 | Baseline, YOLOv8n at 640 px | 0.555 | 4.0 | baseline |
-| 2 | Resolution raised to 960 px | 0.552 | 7.1 | not confirmed |
-| 3 | Larger model, YOLOv8s | 0.571 | 6.0 | partially confirmed |
-| 4 | YOLOv8s at 960 px | 0.561 | 12.0 | not confirmed |
-| 5 | 280 undamaged cars added | 0.560 | 5.6 | confirmed |
+| # | Change | Val mAP50-95 | Hours |
+|---|---|---|---|
+| 1 | Baseline, YOLOv8n at 640 px | 0.555 | 4.0 |
+| 2 | Resolution raised to 960 px | 0.552 | 7.1 |
+| 3 | Larger model, YOLOv8s | 0.571 | 6.0 |
+| 4 | YOLOv8s at 960 px | 0.561 | 12.0 |
+| 5 | 280 undamaged cars added | 0.560 | 5.6 |
+
+**Session 1: baseline.**
+- Prediction: tire flat would be the weakest class, since it has the fewest training examples (225).
+- Result: wrong. Tire flat scored second best. The weak classes were dent, scratch and crack, and they were being missed outright, not confused with each other.
+
+**Session 2: higher resolution.**
+- Prediction: small damage loses its detail when a photo is shrunk to 640 px, so 960 px should lift crack, dent and scratch and leave the other three unchanged.
+- Result: not what happened. Recall rose from 0.658 to 0.695 and precision fell from 0.758 to 0.734, across all classes, so the two cancelled out. Scratch got worse.
+
+**Session 3: larger model.**
+- Prediction: if the weak classes are limited by model size, a larger model should lift dent, scratch and crack.
+- Result: partly. Dent improved and overall mAP50-95 reached its best value, but scratch did not move.
+
+**Session 4: larger model at higher resolution.**
+- Prediction: the two changes should stack for a further gain of 0.01 to 0.02 in mAP50-95 over Session 3.
+- Result: wrong. mAP50-95 fell by 0.010. The model found more damage and drew looser boxes around it, the same pattern as Session 2.
+
+**Session 5: undamaged cars added to training.**
+- Prediction: adding clean cars as negative examples should cut false alarms on undamaged cars, especially on intact lamps, without costing recall on real damage.
+- Result: right. Clean cars flagged fell from 66% to 14%, and recall on real damage moved by 0.001.
 
 Session 5 is the shipped model. It scores slightly below Session 3 on CarDD and far better on clean cars.
 
@@ -120,4 +140,4 @@ This project uses two research datasets. Both are available for non-commercial r
 
 The code is licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE). It builds on [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics), which is released under the same license.
 
-The datasets keep their own terms, described above. This project is non-commercial.
+That license covers the code only. The datasets keep their own terms, described above, and the trained weights in `api/weights/` were produced from CarDD and CompCars, so those terms limit them to non-commercial research use.
