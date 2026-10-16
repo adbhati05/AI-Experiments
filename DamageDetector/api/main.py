@@ -1,3 +1,4 @@
+import os
 import io
 import torch
 import threading
@@ -12,8 +13,11 @@ from pydantic import BaseModel
 # Note: the model weights were copied from the fifth training session's (negatives) run folder to the weights folder in the directory that this file is located in (api).
 WEIGHTS = Path(__file__).resolve().parent / "weights" / "best.pt" # Resolving the path from this file's location to ensure that the model weights can be loaded properly.
 DEVICE = "mps" if torch.backends.mps.is_available() else "cpu" # Ensuring that the model is loaded on this computer's GPU (Apple Silicon) since CPU inference is significantly slower.
-CONF_FLOOR = 0.10 # Setting a confidence floor of 0.10 
+CONF_FLOOR = 0.10 # Setting a confidence floor of 0.10 which is the lowest confidence the API will return. 
 MAX_BYTES = 10 * 1024 * 1024 # Capping the maximum size of the uploaded image to 10 MB to ensure that the API can handle image processing without running into memory issues or timeouts.
+
+# ALLOWED_ORIGINS is an environment variable that will hold the URL that the frontend will be deployed on in Vercel. This allows the frontend to make requests to the backend without running into CORS issues. If the environment variable is not set, it defaults to allowing requests from localhost (which matches the Vite dev server's default port).
+ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")] # Stripping each origin so a space after a comma does not stop it from matching.
 
 # Registering the HEIF opener to ensure that the API can read HEIC/HEIF images, which are commonly used on Apple devices. Even though Ultralytics' replacement for Image.open can read such images, I've explicitly registered the opener here to clarify what formats are supported by the API.
 register_heif_opener()
@@ -28,14 +32,14 @@ model_lock = threading.Lock()
 app = FastAPI(
     title="Damage Detector API",
     version="1.0.0",
-    description="This API allows you to upload an image and receive an annotated image with bounding boxes around detected damages.",
+    description="Upload a photo of a car and receive the detected damage as bounding boxes with class names and confidence scores.",
 )
 
 # Seting up CORS middleware to allow requests from the frontend which is a React Vite app.
 # Vite's dev server runs on port 5173, which is different from Fast API's default port 8000, so we need to allow cross-origin requests from the frontend to the backend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], # Ensuring that the frontend can make requests to the backend by allowing the two origins that Vite's dev server uses.
+    allow_origins=ALLOWED_ORIGINS, # Ensuring that the frontend can make requests to the backend by allowing only the origins listed in ALLOWED_ORIGINS above.
     allow_credentials=False, # Set to False here since my app won't have any auth set up that requires credentials to be sent with requests.
     allow_methods=["GET", "POST"], # Allowing only GET and POST methods since the API will only have two endpoints, one for health check and one for prediction.
     allow_headers=["*"],
@@ -65,7 +69,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-# Setting up the prediction endpoint to accept STRICTLY image files and then doing the necessary processing to return the image with bounding boxes around detected damage.
+# Setting up the prediction endpoint to accept STRICTLY image files and then doing the necessary processing to return the bounding boxes, class names and confidence scores of the detected damage.
 @app.post("/predict")
 def predict(file: UploadFile) -> PredictResponse:
     contents = file.file.read()

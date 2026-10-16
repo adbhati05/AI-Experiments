@@ -22,9 +22,8 @@ data/clean/
 *.tar.gz
 *.cache
 
-# Model weights & training artifacts (making an exception for the best.pt file in the api/weights folder, which is tracked).
-*.pt 
-!api/weights/best.pt
+# Model weights & training artifacts. The trained weights in api/weights are kept out of git as well, since they are derived from CarDD and CompCars.
+*.pt
 *.pth
 *.onnx
 runs/

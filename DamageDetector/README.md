@@ -73,7 +73,7 @@ Session 5 is the shipped model. It scores slightly below Session 3 on CarDD and 
 ## Project layout
 
 ```
-api/     FastAPI backend: main.py, Dockerfile, the model weights
+api/     FastAPI backend: main.py and its Dockerfile
 web/     React frontend: Detect, Training and Performance pages
 src/     train.py and export_metrics.py
 data/    dataset config and instructions (the data itself is not in this repo)
@@ -92,7 +92,7 @@ cd api
 uvicorn main:app --reload
 ```
 
-The API runs at `http://127.0.0.1:8000`, with interactive docs at `/docs`. It loads its weights from `api/weights/best.pt`.
+The API runs at `http://127.0.0.1:8000`, with interactive docs at `/docs`. It loads its model from `api/weights/best.pt`. The trained weights are not published, because they are derived from the two datasets below, so you would need to train your own with `src/train.py` and copy `best.pt` there.
 
 **Frontend**
 
@@ -140,4 +140,4 @@ This project uses two research datasets. Both are available for non-commercial r
 
 The code is licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE). It builds on [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics), which is released under the same license.
 
-That license covers the code only. The datasets keep their own terms, described above, and the trained weights in `api/weights/` were produced from CarDD and CompCars, so those terms limit them to non-commercial research use.
+That license covers the code only. The datasets keep their own terms, described above, which limit them to non-commercial research use. For the same reason, the trained model weights are not included in this repository.

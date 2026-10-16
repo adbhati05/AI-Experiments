@@ -1,0 +1,4 @@
+# Listing what to leave out of the Cloud Run upload explicitly. Without this file, gcloud falls back to .gitignore, which would skip the model weights since git ignores them.
+__pycache__/
+*.pyc
+.env

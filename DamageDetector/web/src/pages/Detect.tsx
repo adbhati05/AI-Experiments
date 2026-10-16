@@ -85,7 +85,7 @@ export default function Detect() {
     return (
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <div className="text-center">
-          <h1 className="font-display text-3xl font-semibold tracking-wide md:text-5xl">Find the damage</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-wide md:text-5xl">Detect the damage</h1>
           <p className="mx-auto mt-3 max-w-md text-muted">
             Dents, scratches, cracks, shattered glass, broken lamps, and flat tires, marked on your photo.
           </p>
