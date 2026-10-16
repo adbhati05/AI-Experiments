@@ -4,7 +4,7 @@ A web app that finds damage in a photo of a car. Upload a photo and it marks den
 
 The model is YOLOv8s fine-tuned on the CarDD dataset. The backend is FastAPI, the frontend is React, and everything was trained on one laptop.
 
-Live demo: coming soon.
+Live demo: [damagedetector.adityabdev.com](https://damagedetector.adityabdev.com)
 
 ## Results
 
@@ -115,6 +115,46 @@ python src/export_metrics.py
 ```
 
 The second command rewrites `web/src/data/metrics.json`, which the Training and Performance pages read.
+
+## Deployment
+
+The site and the API are hosted separately.
+
+| Part | Host | Details |
+|---|---|---|
+| Website | Vercel | built from `web/`, served at `damagedetector.adityabdev.com` |
+| API | Google Cloud Run | built from `api/Dockerfile`, region `us-east1` |
+
+**API on Cloud Run**
+
+- Runs on CPU with 2 vCPUs and 2 GB of memory. The container uses the CPU-only build of PyTorch, since Cloud Run has no GPU.
+- Scales to zero when nobody is using it and is capped at one instance, which keeps it inside Cloud Run's free tier and limits what a traffic spike can cost. The first request after a quiet period waits for the container to start, and startup CPU boost is on to shorten that.
+- `ALLOWED_ORIGINS` is set to the site's address, so only the site can call the API from a browser.
+- Deployed from inside `api/` with:
+
+```
+gcloud run deploy damagedetector-api \
+  --source . \
+  --region us-east1 \
+  --memory 2Gi --cpu 2 \
+  --max-instances 1 \
+  --cpu-boost \
+  --allow-unauthenticated \
+  --set-env-vars ALLOWED_ORIGINS=https://damagedetector.adityabdev.com
+```
+
+`--source .` uploads the folder and Cloud Build builds the image from the Dockerfile. The model weights are not in git, so they are uploaded from the local `api/weights/` folder; `api/.gcloudignore` makes sure they are included, since without it `gcloud` would follow `.gitignore` and leave them out.
+
+**Website on Vercel**
+
+- Root directory: `DamageDetector/web`.
+- `VITE_API_URL` is set to the Cloud Run service URL, with no trailing slash.
+- `web/vercel.json` sends every path to `index.html`, so refreshing `/training` or `/performance` works.
+
+**Updating**
+
+- Website changes deploy automatically when they are pushed to GitHub.
+- API changes need the deploy command above run again from `api/`.
 
 ## A note on training on Apple Silicon
 
