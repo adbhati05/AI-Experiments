@@ -2,7 +2,7 @@
 
 The frontend for DamageDetector. It has three pages:
 
-- **Detect** uploads a photo to the API and draws the detections on it, with a confidence slider.
+- **Detect** uploads a photo to the API and draws the detections on it, with a confidence slider. Below the results is an optional questionnaire on how the model did.
 - **Training** shows the five training sessions and what each one found.
 - **Performance** shows how the shipped model scores on the test split.
 
@@ -32,7 +32,7 @@ src/
   pages/        Detect, Training, Performance
   components/   the top bar, charts, tables and the upload pieces
   lib/          the API client, shared types and the class colors
-  hooks/        the check that the API is awake
+  hooks/        the check that the API is awake, and the feedback totals
   data/         metrics.json and the notes for each training session
 public/         the logo
 ```
@@ -42,6 +42,7 @@ public/         the logo
 - **Colors.** The interface colors are defined once in `src/index.css`, and the six damage class colors in `src/lib/classes.ts`.
 - **Numbers on the Training and Performance pages.** They come from `src/data/metrics.json`, which is written by `src/export_metrics.py` in the project root. Rerun that script after retraining instead of editing the file by hand.
 - **The API address.** `VITE_API_URL`, in `.env.local` for development and in the host's settings for production.
+- **When the feedback counter appears.** `MIN_REPORTS` in `src/components/ReportedStats.tsx`, set to 10. The counter sits in the footer and is hidden below that number or if the API cannot read the totals.
 
 ## Deploying
 

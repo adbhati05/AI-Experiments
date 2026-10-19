@@ -2,7 +2,7 @@
 
 A web app that finds damage in a photo of a car. Upload a photo and it marks dents, scratches, cracks, shattered glass, broken lamps and flat tires, each with a confidence score.
 
-The model is YOLOv8s fine-tuned on the CarDD dataset. The backend is FastAPI, the frontend is React, and everything was trained on one laptop.
+The model is YOLOv8s fine-tuned on the CarDD dataset. The backend is FastAPI, the frontend is React, and everything was trained on one laptop. After each scan, visitors can optionally say whether the model got it right, and the running totals are shown in the site's footer.
 
 Live demo: [damagedetector.adityabdev.com](https://damagedetector.adityabdev.com)
 
@@ -89,10 +89,14 @@ You need Python 3.12 and Node 22.
 pip install torch torchvision
 pip install -r api/requirements.txt
 cd api
-uvicorn main:app --reload
+echo "PREDICTION_SECRET=$(python3 -c 'import secrets; print(secrets.token_hex(32))')" > .env
+gcloud auth application-default login
+uvicorn main:app --reload --env-file .env
 ```
 
 The API runs at `http://127.0.0.1:8000`, with interactive docs at `/docs`. It loads its model from `api/weights/best.pt`. The trained weights are not published, because they are derived from the two datasets below, so you would need to train your own with `src/train.py` and copy `best.pt` there.
+
+`PREDICTION_SECRET` signs the token that each scan returns, and the API will not start without it. Any value works locally. `api/.env` is gitignored. The feedback endpoints use Firestore, and `gcloud auth application-default login` lets the API reach it with your own Google account. The project ID is set in `main.py`, so to run them against your own database, change it to a Google Cloud project with Firestore enabled. `/predict` works without Firestore.
 
 **Frontend**
 
@@ -116,6 +120,25 @@ python src/export_metrics.py
 
 The second command rewrites `web/src/data/metrics.json`, which the Training and Performance pages read.
 
+## Feedback questionnaire
+
+Below each scan's results there is an optional prompt asking how the model did. It asks at most three questions, each appearing once the previous one is answered:
+
+1. Did your photo show a car with damage?
+2. If yes, did the model detect the damage accurately? If no, did the model detect any damage?
+3. Only if the damage was not detected accurately: which damage was on the car, picked from the six classes.
+
+Each answer is counted as correct, missed or wrong, or a false positive. The footer shows the running totals, labeled as user-reported, since only some visitors answer and the answers are not checked. The totals stay hidden until there are 10 answers, and they are also hidden if the database does not respond.
+
+**What is stored.** Each answer is one Firestore document holding the answers, the outcome, any classes picked, the confidence threshold the slider was at, the classes visible at that threshold, and a timestamp. The photo is never stored, and nothing identifies the visitor.
+
+**How it works.**
+
+- The browser never talks to Firestore. It sends answers to the API, which writes them using the Cloud Run service account. The Firestore security rules deny all direct access.
+- `/predict` returns a `prediction_token` with every scan. The token is a random ID followed by an HMAC signature of it, made with `PREDICTION_SECRET`. `POST /feedback` only accepts tokens whose signature checks out, so answers cannot be invented without a real scan.
+- The random ID becomes the document's name, and the document is created with `create()`, which fails if it already exists. Each scan can therefore be answered only once, and a repeat gets a 409.
+- The answer and the totals document (`stats/totals`) are written in one batch, with the totals updated through Firestore's atomic increments, so the counts always match the answers. `GET /stats` returns the totals.
+
 ## Deployment
 
 The site and the API are hosted separately.
@@ -124,12 +147,15 @@ The site and the API are hosted separately.
 |---|---|---|
 | Website | Vercel | built from `web/`, served at `damagedetector.adityabdev.com` |
 | API | Google Cloud Run | built from `api/Dockerfile`, region `us-east1` |
+| Feedback database | Firestore | Native mode, region `us-east1`, same Google Cloud project as the API |
 
 **API on Cloud Run**
 
 - Runs on CPU with 2 vCPUs and 2 GB of memory. The container uses the CPU-only build of PyTorch, since Cloud Run has no GPU.
 - Scales to zero when nobody is using it and is capped at one instance, which keeps it inside Cloud Run's free tier and limits what a traffic spike can cost. The first request after a quiet period waits for the container to start, and startup CPU boost is on to shorten that.
 - `ALLOWED_ORIGINS` is set to the site's address, so only the site can call the API from a browser.
+- `PREDICTION_SECRET` is a random key set on the service and kept out of the repo. Production uses a different key from local development.
+- The API reaches Firestore as the service's default account, which has access through its Editor role, so no key file is needed.
 - Deployed from inside `api/` with:
 
 ```
@@ -140,8 +166,10 @@ gcloud run deploy damagedetector-api \
   --max-instances 1 \
   --cpu-boost \
   --allow-unauthenticated \
-  --set-env-vars ALLOWED_ORIGINS=https://damagedetector.adityabdev.com
+  --update-env-vars ALLOWED_ORIGINS=https://damagedetector.adityabdev.com,PREDICTION_SECRET=<random key>
 ```
+
+`--update-env-vars` adds or changes only the variables it lists, and the service keeps them between deploys, so later deploys can leave the flag out. Avoid `--set-env-vars` here: it replaces every variable on the service, so setting one would delete the other.
 
 `--source .` uploads the folder and Cloud Build builds the image from the Dockerfile. The model weights are not in git, so they are uploaded from the local `api/weights/` folder; `api/.gcloudignore` makes sure they are included, since without it `gcloud` would follow `.gitignore` and leave them out.
 

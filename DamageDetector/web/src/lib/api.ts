@@ -1,4 +1,4 @@
-import type { PredictResponse } from './types'
+import type { FeedbackRequest, PredictResponse, Stats } from './types'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -29,4 +29,36 @@ export async function predict(file: File): Promise<PredictResponse> {
   // fetch only throws on network failures, so a 400 or 413 from the API has to be checked for here. The API puts its message in "detail".
   if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Something went wrong while scanning the photo.')
   return data
+}
+
+export type FeedbackResult = 'saved' | 'duplicate' | 'failed'
+
+export const STATS_CHANGED = 'stats-changed' // Fired on window after an answer is saved, so the counter in the footer can fetch the new totals.
+
+// Returning a result instead of throwing, since a repeated answer (409) is not really a failure and the form treats it as done.
+export async function submitFeedback(feedback: FeedbackRequest): Promise<FeedbackResult> {
+  try {
+    const res = await fetch(`${API_URL}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(feedback),
+    })
+    if (res.ok) {
+      window.dispatchEvent(new Event(STATS_CHANGED))
+      return 'saved'
+    }
+    return res.status === 409 ? 'duplicate' : 'failed'
+  } catch {
+    return 'failed'
+  }
+}
+
+// Returning null when the stats cannot be read, so the counter hides itself instead of showing a made up number.
+export async function getStats(): Promise<Stats | null> {
+  try {
+    const res = await fetch(`${API_URL}/stats`)
+    return res.ok ? await res.json() : null
+  } catch {
+    return null
+  }
 }

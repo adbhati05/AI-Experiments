@@ -1,3 +1,5 @@
+import type { ClassName } from './classes'
+
 // The response shape of POST /predict. These mirror the Pydantic models in api/main.py.
 export interface Box {
   x1: number
@@ -13,9 +15,27 @@ export interface Detection {
 }
 
 export interface PredictResponse {
+  prediction_token: string // Signed by the API and sent back unchanged with the feedback for this scan.
   width: number
   height: number
   detections: Detection[]
+}
+
+// The request body of POST /feedback and the response of GET /stats, mirroring FeedbackRequest and Stats in api/main.py.
+export interface FeedbackRequest {
+  prediction_token: string
+  has_damage: boolean
+  model_correct: boolean
+  missed_classes: ClassName[]
+  threshold: number
+  shown_classes: ClassName[]
+}
+
+export interface Stats {
+  total: number
+  correct: number
+  missed_or_wrong: number
+  false_positive: number
 }
 
 // The shape of metrics.json, which is written by src/export_metrics.py.

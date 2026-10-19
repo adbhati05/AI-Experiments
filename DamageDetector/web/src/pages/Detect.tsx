@@ -5,10 +5,12 @@ import { Dropzone } from '../components/Dropzone'
 import { PhotoWithBoxes } from '../components/PhotoWithBoxes'
 import { ConfidenceSlider } from '../components/ConfidenceSlider'
 import { DetectionList } from '../components/DetectionList'
+import { Feedback } from '../components/Feedback'
 import { MAX_UPLOAD_BYTES, predict } from '../lib/api'
 import { metrics } from '../lib/metrics'
 import { useServerStatus } from '../hooks/useServerStatus'
 import type { ServerStatus } from '../hooks/useServerStatus'
+import type { ClassName } from '../lib/classes'
 import type { PredictResponse } from '../lib/types'
 
 type State =
@@ -124,6 +126,7 @@ export default function Detect() {
   const all = result.detections.map((detection, index) => ({ index, detection }))
   const visible = all.filter((item) => item.detection.confidence >= threshold)
   const hidden = all.length - visible.length
+  const shownClasses = [...new Set(visible.map((item) => item.detection.class_name as ClassName))] // The distinct classes on screen at the current threshold, sent with any feedback.
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
@@ -165,6 +168,8 @@ export default function Detect() {
           <RotateCcw size={16} />
           Scan another photo
         </button>
+
+        <Feedback key={result.prediction_token} token={result.prediction_token} threshold={threshold} shownClasses={shownClasses} />
       </motion.aside>
     </div>
   )

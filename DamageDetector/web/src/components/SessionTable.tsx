@@ -57,7 +57,8 @@ export function SessionTable({ active, onActive }: { active: number | null; onAc
               <span className="num hidden text-right text-muted md:block">{session.epochs_run}</span>
               <span className="num hidden text-right text-muted md:block">{session.wall_time_hours.toFixed(1)}</span>
               <span className="hidden md:block"><Verdict verdict={session.verdict} /></span>
-              <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }} className="flex justify-end text-muted">
+              {/* Sizing the span to the icon and aligning it with justify-self, so it rotates around the icon's own center instead of the whole column's. */}
+              <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }} className="flex justify-self-end text-muted">
                 <ChevronDown size={16} />
               </motion.span>
             </button>
