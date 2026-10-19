@@ -10,6 +10,7 @@ venv/
 env/
 *.egg-info/
 .ipynb_checkpoints/
+.env
 
 # Datasets, images are large and live outside git.
 # The label files are converted from CarDD's annotations, and CarDD's licence does not allow redistributing them, so they stay out of git too.

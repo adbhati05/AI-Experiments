@@ -5,3 +5,4 @@ python-multipart==0.0.32
 pillow==12.3.0
 pi-heif==1.4.0
 ultralytics==8.4.146
+google-cloud-firestore==2.34.1
