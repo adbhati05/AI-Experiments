@@ -25,57 +25,63 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
 }
 
+const LONG_PAGES = ['/training', '/performance'] // The pages long enough to need the back to top button.
+
 function App() {
   const location = useLocation()
+  const showBackToTop = LONG_PAGES.includes(location.pathname)
 
   return (
     // Setting reducedMotion to "user" so every animation respects the visitor's reduced motion setting.
     <MotionConfig reducedMotion="user">
       <div className="flex min-h-dvh flex-col">
         <TopBar />
-        {/* Keying the page on its path so each page fades in when it is navigated to. */}
-        <motion.main
-          key={location.pathname}
-          className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 md:py-14"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <Suspense fallback={null}>
+        {/* Wrapping the footer in the same Suspense as the page, so it waits for a lazily loaded page's code instead of showing on its own first. */}
+        <Suspense fallback={null}>
+          {/* Keying the page on its path so each page fades in when it is navigated to. */}
+          <motion.main
+            key={location.pathname}
+            className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 md:py-14"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
             <Routes location={location}>
               <Route path="/" element={<Detect />} />
               <Route path="/training" element={<Training />} />
               <Route path="/performance" element={<Performance />} />
               <Route path="*" element={<Detect />} />
             </Routes>
-          </Suspense>
-        </motion.main>
-        <footer className="border-t border-line">
-          {/* The counter and copyright sit on the left and the back to top button on the right. The counter renders nothing until there are enough answers. */}
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-6 text-xs text-muted">
-            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <ReportedStats />
-              <span>© {new Date().getFullYear()} Aditya Bhati.</span>
-              <a
-                href="https://github.com/adbhati05/AI-Experiments/tree/main/DamageDetector"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Source on GitHub"
-                className="transition-colors duration-150 hover:text-brass"
-              >
-                <GitHubMark />
-              </a>
-            </p>
-            <button
-              type="button"
-              onClick={scrollToTop}
-              aria-label="Back to top"
-              className="flex h-7 w-7 flex-none items-center justify-center rounded-md border border-muted transition-colors duration-150 hover:border-brass hover:text-brass"
-            >
-              <ArrowUp size={14} />
-            </button>
-          </div>
-        </footer>
+          </motion.main>
+          <footer className="border-t border-line">
+            {/* The counter and copyright sit on the left and the back to top button on the right. The counter renders nothing until there are enough answers. */}
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-6 text-xs text-muted">
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <ReportedStats />
+                <span>© {new Date().getFullYear()} Aditya Bhati.</span>
+                <a
+                  href="https://github.com/adbhati05/AI-Experiments/tree/main/DamageDetector"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Source on GitHub"
+                  className="transition-colors duration-150 hover:text-brass"
+                >
+                  <GitHubMark />
+                </a>
+              </p>
+              {showBackToTop && (
+                <button
+                  type="button"
+                  onClick={scrollToTop}
+                  aria-label="Back to top"
+                  className="flex h-7 w-7 flex-none items-center justify-center rounded-md border border-muted transition-colors duration-150 hover:border-brass hover:text-brass"
+                >
+                  <ArrowUp size={14} />
+                </button>
+              )}
+            </div>
+          </footer>
+        </Suspense>
       </div>
     </MotionConfig>
   )
